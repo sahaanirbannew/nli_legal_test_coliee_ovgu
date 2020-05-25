@@ -5,24 +5,19 @@ Created on Mon May 11 10:58:23 2020
 @author: Sachin Nandakumar
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Sat May  2 10:21:23 2020
-
-@author: Sachin Nandakumar
-"""
-
 '''#######################################################
         PARSE PREPROCESSED TRAIN/TEST DATA
 #######################################################'''
 
 
 import json
+import re
 import numpy as np
 import pandas as pd
 from nltk import word_tokenize 
 from nltk import pos_tag
 from nltk.tag.mapping import tagset_mapping
+from sklearn import preprocessing
 
 '''
 Location of file(s) required to run the program
@@ -34,26 +29,43 @@ law2Vec_doc = "../data/Law2Vec/Law2Vec.200d.txt"
 Define & initialize global constants
 '''
 
-word_dimension = 200
-max_premise_length, max_hypothesis_length = 200, 80
+NORMALIZE = True
+REPLACE_NUMBERS_WITH_D = True
+
 PTB_UNIVERSAL_MAP = tagset_mapping('en-ptb', 'universal')
 POS_categories = {'.', 'ADJ', 'ADP', 'ADV', 'CONJ', 'DET', 'NOUN', 'NUM', 'PRON', 'PRT', 'VERB', 'X'}
+tag_category = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+
+word_dimension = 200
+max_premise_length, max_hypothesis_length = 200, 80
 tag_dimension = len(POS_categories)
 
 # Read law2vec vectors from law2Vec_doc and store in a dictionary as [word:vector]
 law2vec_wordmap = {}
-with open(law2Vec_doc, "r", errors='ignore') as law2vec:
-    for line in law2vec:
-        name, vector = tuple(line.split(" ", 1))
-        law2vec_wordmap[name] = np.fromstring(vector, sep=" ")
-    del law2Vec_doc, line, name, vector                         # delete variables no longer required to free the RAM
-        
-        
+if not NORMALIZE:
+    with open(law2Vec_doc, "r", errors='ignore') as law2vec:
+        for line in law2vec:
+            name, vector = tuple(line.split(" ", 1))
+            law2vec_wordmap[name] = np.fromstring(vector, sep=" ")
+        del law2Vec_doc, line, name, vector                         # delete variables no longer required to free the RAM
+else:
+    list_of_words = []
+    list_of_vectors = []
+    with open(law2Vec_doc, "r", errors='ignore') as law2vec:
+        for line in law2vec:
+            name, vector = tuple(line.split(" ", 1))
+            list_of_words.append(name)
+            list_of_vectors.append(np.fromstring(vector, sep=" "))
+            
+        list_of_vectors = preprocessing.normalize(list_of_vectors, norm='l2')
+        law2vec_wordmap = dict(zip(list_of_words, list_of_vectors))
+        del law2Vec_doc, line, name, vector, list_of_words, list_of_vectors                       # delete variables no longer required to free the RAM
+
 def to_universal(tagged_words):
     return [(word, PTB_UNIVERSAL_MAP[tag]) for word, tag in tagged_words]
 
 def get_POS_tags(text):
-    pos_tagged = to_universal([(word, tag) for word, tag in pos_tag(word_tokenize(text))])
+    pos_tagged = to_universal([(word.lower(), tag) for word, tag in pos_tag(word_tokenize(text))])
     pos_tagged = pd.DataFrame(pos_tagged, columns=['word', 'tag'])
     return pos_tagged
 
@@ -65,12 +77,11 @@ def fit_to_size(matrix, tag, shape):
     Output:         Sentences either clipped-off at length limit or padded with law2vec embedding of word "PAD"
     '''
     padded_matrix = np.tile(law2vec_wordmap["PAD"],(shape[0],1))                    # initially create a matrix of desired shape with law2vec embeddings of word "PAD"
-    padded_tags = np.zeros((shape[0], tag_dimension))
+    padded_tags = np.tile(tag_category,(shape[0],1))
     slices = [slice(0,min(dim,shape[e])) for e, dim in enumerate(matrix.shape)]
     padded_matrix[slices] = matrix[slices]
     padded_tags[slices] = tag[slices]
     padded_matrix = np.concatenate((padded_matrix, padded_tags), axis=1)
-    
     return padded_matrix
 
 
@@ -82,8 +93,12 @@ def sentence2sequence(sentence):
     '''
     
     pos_tagged = get_POS_tags(sentence)
-    vocabulary = list(pos_tagged[pos_tagged.columns[0]])
-      
+    
+    if REPLACE_NUMBERS_WITH_D:
+        vocabulary = [re.sub('\d', 'D', word) for word in list(pos_tagged[pos_tagged.columns[0]])]
+    else:
+        vocabulary = list(pos_tagged[pos_tagged.columns[0]])
+    
     rows, words = [], []
     for word in vocabulary:
         word = word.strip()
@@ -122,9 +137,9 @@ def add_sentence_tags(premise, hyp, word_dim, tag_dim):
     '''
     
     # pad 0s of tag_dimension to BOS, SEP and EOS to maintain the dimension of word + tag
-    BOS = np.concatenate((law2vec_wordmap["BOS"], np.full((tag_dimension), 0)), axis=None)
-    SEP = np.concatenate((law2vec_wordmap["SEP"], np.full((tag_dimension), 0)), axis=None)
-    EOS = np.concatenate((law2vec_wordmap["EOS"], np.full((tag_dimension), 0)), axis=None)
+    BOS = np.concatenate((law2vec_wordmap["BOS"], np.asarray(tag_category)), axis=None)
+    SEP = np.concatenate((law2vec_wordmap["SEP"], np.asarray(tag_category)), axis=None)
+    EOS = np.concatenate((law2vec_wordmap["EOS"], np.asarray(tag_category)), axis=None)
     
     # Reshaping vector of shape (1, word_dimension) to (1, 1, word_dimension)
     #   This means: 1 sentence consists of 1 word of 'word_dimension' dimensions
@@ -174,13 +189,22 @@ def get_data(preprocessed_json_file, datatype="TRAIN"):
         
         if datatype == "TRAIN":
             labels.append(pair['label'])
+
+    for sent, tag in zip(premise_sentences, premise_tags):
+        if sent.shape[0] != len(tag):
+            print(tag)
+
+    premise_sentences = np.stack([fit_to_size(sent, tag, (max_premise_length, word_dimension)) 
+                                  for sent, tag in zip(premise_sentences, premise_tags)])
     
-    premise_sentences = np.stack([fit_to_size(sent, tag, (max_premise_length, word_dimension)) for sent, tag in zip(premise_sentences, premise_tags)])
-    hyp_sentences = np.stack([fit_to_size(sent, tag, (max_hypothesis_length, word_dimension)) for sent, tag in zip(hyp_sentences, hyp_tags)])
+    hyp_sentences = np.stack([fit_to_size(sent, tag, (max_hypothesis_length, word_dimension)) 
+                              for sent, tag in zip(hyp_sentences, hyp_tags)])
+    
     
     if datatype == "TRAIN":
         return add_sentence_tags(premise_sentences, hyp_sentences, word_dimension, tag_dimension), labels
     else:
         return add_sentence_tags(premise_sentences, hyp_sentences, word_dimension, tag_dimension)
-    
-#get_data(train_set, max_premise_length, max_hypothesis_length)
+
+# PREPROCESSED_TRAIN_SET = "../../data/preprocessed_data/preprocessed_training_set.json"
+# get_data(PREPROCESSED_TRAIN_SET)

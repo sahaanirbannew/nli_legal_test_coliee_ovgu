@@ -13,6 +13,9 @@ Created on Sat May  2 10:21:23 2020
 import json
 import numpy as np
 from nltk import word_tokenize 
+from sklearn import preprocessing
+import re
+
 
 '''
 Location of file(s) required to run the program
@@ -26,15 +29,29 @@ Define & initialize global constants
 
 word_dimension = 200
 max_premise_length, max_hypothesis_length = 200, 80
+NORMALIZE = True
+REPLACE_NUMBERS_WITH_D = True
 
 # Read law2vec vectors from law2Vec_doc and store in a dictionary as [word:vector]
 law2vec_wordmap = {}
-with open(law2Vec_doc, "r", errors='ignore') as law2vec:
-    for line in law2vec:
-        name, vector = tuple(line.split(" ", 1))
-        law2vec_wordmap[name] = np.fromstring(vector, sep=" ")
-    del law2Vec_doc, line, name, vector                         # delete variables no longer required to free the RAM
-        
+if not NORMALIZE:
+    with open(law2Vec_doc, "r", errors='ignore') as law2vec:
+        for line in law2vec:
+            name, vector = tuple(line.split(" ", 1))
+            law2vec_wordmap[name] = np.fromstring(vector, sep=" ")
+        del law2Vec_doc, line, name, vector                         # delete variables no longer required to free the RAM
+else:
+    list_of_words = []
+    list_of_vectors = []
+    with open(law2Vec_doc, "r", errors='ignore') as law2vec:
+        for line in law2vec:
+            name, vector = tuple(line.split(" ", 1))
+            list_of_words.append(name)
+            list_of_vectors.append(np.fromstring(vector, sep=" "))
+            
+        list_of_vectors = preprocessing.normalize(list_of_vectors, norm='l2')
+        law2vec_wordmap = dict(zip(list_of_words, list_of_vectors))
+        del law2Vec_doc, line, name, vector, list_of_words, list_of_vectors                       # delete variables no longer required to free the RAM
         
 
 def fit_to_size(matrix, shape): 
@@ -56,7 +73,10 @@ def sentence2sequence(sentence):
     Input:          Sentence
     Output:         List of embeddings for each word in the sentence, List of words
     '''
-    vocabulary = word_tokenize(sentence.lower())
+    if REPLACE_NUMBERS_WITH_D:
+        vocabulary = word_tokenize(re.sub('\d', 'D', sentence.lower()))
+    else:
+        vocabulary = word_tokenize(sentence.lower())
     rows, words = [], []
     for word in vocabulary:
         word = word.strip()
@@ -113,10 +133,14 @@ def get_data(preprocessed_json_file, datatype="TRAIN"):
     
     for _, pair in data.items():
         premise = sentence2sequence(pair['text1'])          # pair['text1'] represents premise sentence
+        hyp = sentence2sequence(pair['text2'])              # pair['text2'] represents hypothesis sentence
+        
+        # if REPLACE_NUMBERS_WITH_D:
+            
         premise_sentences.append(np.vstack(premise[0]))
         premise_text.append(premise[1])
         
-        hyp = sentence2sequence(pair['text2'])              # pair['text2'] represents hypothesis sentence
+        
         hyp_sentences.append(np.vstack(hyp[0]))
         hyp_text.append(hyp[1])
         

@@ -10,10 +10,12 @@ Created on Thu May 14 18:48:30 2020
 #######################################################'''
 
 import os
+import sys
+import math
 import h5py
 import datetime
 import numpy as np
-from data_parser import data_parser_for_neg as dp
+from data_parser import data_parser_for_simneg as dp
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -21,8 +23,6 @@ from sklearn.utils import shuffle
 import tensorflow as tf
 from tensorflow.contrib import rnn
 from keras.utils.np_utils import to_categorical
-#import tensorflow.python.util.deprecation as deprecation
-#deprecation._PRINT_DEPRECATION_WARNINGS = False
 
 '''############################################################
 Location of file(s):
@@ -55,15 +55,12 @@ Define & initialize constants for lstm architecture
 ############################################################'''
 
 # Training Parameters
-learning_rate = 1e-06
-#learning_rate = 0.0001
+learning_rate = 1e-05
 num_input = X_train.shape[2]            # dimension of each sentence 
 timesteps = X_train.shape[1]            # timesteps
-num_hidden = {1: 100, 2: 64}            # dictionary that defines number of neurons per layer 
+num_hidden = {1: 128, 2: 64}            # dictionary that defines number of neurons per layer 
 num_classes = 2                         # total number of classes
 num_layers = 1                          # desired number of LSTM layers
-    
-weight_decay = 1e-06                    # hyperparameter for regularizer
 
 del premise_hypo_pair, correct_labels   # delete unused variables to free RAM
 
@@ -83,8 +80,8 @@ tf.compat.v1.reset_default_graph()
 X = tf.compat.v1.placeholder("float", [None, timesteps, num_input])
 y = tf.compat.v1.placeholder("float", [None, num_classes])
 
-initializer = tf.compat.v1.keras.initializers.VarianceScaling() # He initialization. Better for ReLu (Based on Delving Deep into Rectifiers: https://arxiv.org/pdf/1502.01852v1.pdf)
-# initializer = tf.contrib.layers.xavier_initializer()
+initializer = tf.contrib.layers.xavier_initializer()
+# initializer = tf.keras.initializers.he_normal()     # He initialization. Better for ReLu (Based on Delving Deep into Rectifiers: https://arxiv.org/pdf/1502.01852v1.pdf)
 
 fc_weights = {
         'out' : tf.Variable(initializer(([2*num_hidden[1], num_classes])), name='w_out')    # output weights for applying softmax
@@ -94,6 +91,9 @@ fc_biases = {
         'out' : tf.Variable(tf.zeros([num_classes]), name='b_out')                          # output bias
         }
 
+keep_prob = tf.placeholder(tf.float32, name='keep_prob')    
+weight_decay = tf.placeholder(tf.float32, name='weight_decay')
+tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, tf.nn.l2_loss(fc_weights['out'])) 
 
 '''#######################################################
 Define BiLSTM network architecture
@@ -116,13 +116,13 @@ def BiRNN(x, weights, bias):
     output = x   
     
     for i in range(num_layers):
-        
-        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.relu)          # define forward lstm cell with hidden cells
-        lstm_fw_cell = rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=0.5)       # define dropout over hidden forward lstm cell
-        lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.relu)          # define backward lstm cell with hidden cells
-        lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,  output_keep_prob=0.5)      # define dropout over hidden backward lstm cell
-            
-        with tf.compat.v1.variable_scope('lstm'+str(i)):
+       lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)           # define forward lstm cell with hidden cells
+       lstm_fw_cell = rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=keep_prob)                               # define dropout over hidden forward lstm cell
+       
+       lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)           # define backward lstm cell with hidden cells
+       lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,  output_keep_prob=keep_prob)                              # define dropout over hidden backward lstm cell
+       
+       with tf.compat.v1.variable_scope('lstm'+str(i)):
             try:
                 output, state_fw, state_bw = rnn.static_bidirectional_rnn(lstm_fw_cell, lstm_bw_cell, output, dtype=tf.float32)
             except Exception: # Old TensorFlow version only returns outputs not states
@@ -142,27 +142,27 @@ Define: activation, loss, regularization, optimizer,
 with tf.name_scope("output"):
     logits, output = BiRNN(X, fc_weights, fc_biases)
     prediction = tf.nn.softmax(logits, name='prediction')   # applies softmax over BiRNN output to calculate predicted values
-#tf.compat.v1.summary.histogram("prediction", prediction)    # write predicted values to tensorboard summary (histogram visualization)
-
-
-with tf.name_scope("loss"):
-    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y))      # calculate loss 
-    tf.compat.v1.summary.scalar('loss_op', loss_op)                                                 # write loss values to tensorboard summary 
-                                                                                                    # (histogram visualization)
-    regularizer= tf.nn.l2_loss(fc_weights['out'])                                                   # apply regularizer over output weights
-    loss_op = loss_op + weight_decay * regularizer                                                  # add regularization term with loss.
-    
-    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)                                     # apply Adam Optimizer for loss optimization
-    gvs = optimizer.compute_gradients(loss_op)                                                      # fetch gradient values
-    capped_gvs = [(tf.clip_by_value(grad, -0.1, 0.1), var) for grad, var in gvs]                    # clip each gradient value within the limit
-    
-    train_op = optimizer.apply_gradients(gvs)                                                       # applied clipped gradients
-    #     train_op = optimizer.minimize(loss_op)
 
 with tf.name_scope("accuracy"):
     correct_predictions = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))                       # obtain correct predictions on comparison with actual labels
     accuracy = tf.reduce_mean(tf.cast(correct_predictions, 'float'), name="accuracy")               # mean of correct predictions
-tf.compat.v1.summary.scalar('accuracy', accuracy)
+    tf.compat.v1.summary.scalar('accuracy', accuracy)
+
+
+with tf.name_scope("loss"):
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y))      # calculate loss 
+    tf.compat.v1.summary.scalar('loss_op', loss_op)                                                 # write loss values to tensorboard summary (histogram visualization)
+    
+    reg_losses = tf.compat.v1.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)                              # apply regularizer over output weights    
+    loss_op = loss_op + weight_decay * tf.add_n(reg_losses)                                         # add regularization term with loss.
+    
+optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)                         # apply Adam Optimizer for loss optimization
+    
+# introducing clip_by_value to gradients:
+gvs = optimizer.compute_gradients(loss_op)
+capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]  # clip each gradient value within the limit
+train_op = optimizer.apply_gradients(capped_gvs)                            # applied clipped gradients
+# train_op = optimizer.minimize(loss_op)
 
 
 '''#######################################################
@@ -170,6 +170,13 @@ Begin training
 #######################################################'''
 
 def save_LSTM_states(states_inter, state_val, SAVE_STATES_TO):
+    '''
+    Description:    Saves LSTM states to disk
+    Input:          1. states_inter: list of states from batch inputs. Eg: If number_of_batches = 4, len(states_inter) = 4 
+                    2. state_val: list of states from validation input
+                    3. SAVE_STATES_TO: location where the states file have to saved to 
+    Output:         HDF5 file of lstm states saved to SAVE_STATES_TO location
+    '''
     final_states = []
     states_inter = np.vstack(states_inter)
     final_states.append(states_inter)                       # append training_states to final_states 
@@ -200,16 +207,15 @@ def run_train(session, train_x, train_y):
     train_counter = 0
     validation_counter = 0
     
-    training_steps = 100  # epochs
-    batch_size = 128        # batch size
-    display_step = 10       # displays 
+    training_steps = 100000     # epochs
+    batch_size = 64             # batch size
+    display_step = 10           # displays 
     
     #for early stopping :    
-    best_loss_val=1000000   # initializing best validation loss to a higher value.
-    best_train_acc = 0      # best training accuracy
-    last_improvement=0      # a counter which keeps the record of since when (timesteps/iterations) last improvement was seen
-    patience= 10            # the number of epochs without improvement you allow before training should be aborted
-    average_loss_baseline = 0.74
+    best_loss_val = 1000000     # initializing best validation loss to a higher value.
+    best_train_acc = 0          # best training accuracy
+    last_improvement = 0        # a counter which keeps the record of since when (timesteps/iterations) last improvement was seen
+    patience = 10               # the number of epochs without improvement you allow before training should be aborted
     # since the values are updated every 10th iteration, the stopping limit becomes: (patience * 10)
     
     costs = []              # validation costs history
@@ -227,21 +233,24 @@ def run_train(session, train_x, train_y):
         for i in range(inner_split + 1):
             batch_x = train_x[i*batch_size:(i+1)*batch_size]                        # generating batches of X_train
             batch_y = train_y[i*batch_size:(i+1)*batch_size]                        # generating batches of y_train
-            session.run(train_op, feed_dict={X: batch_x, y: batch_y})
+            session.run(train_op, feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})
             
             if epoch == 1 or epoch % display_step == 0:                             # print and save necessary information about training only at an interval of 'display_step' number of steps to reduce computational complexity
                 
-                state_train = session.run([output], feed_dict={X: batch_x, y: batch_y})     # extract states for each batch-wise training inputs
+                state_train = session.run([output], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})     # extract states for each batch-wise training inputs
                 states_inter.append(np.array(state_train)[0])
             
                 if i == inner_split:                                                # last batch split of the selected epoch 
-                    summary, loss_train, acc_train = session.run([merged, loss_op, accuracy], feed_dict={X: batch_x, y: batch_y})
+                    summary, loss_train, acc_train = session.run([merged, loss_op, accuracy], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})
                     train_writer.add_summary(summary, train_counter)
                     
-                    summary, loss_val, acc_val, state_val = session.run([merged, loss_op, accuracy, output], feed_dict={X: X_val, y: y_val})
+                    summary, loss_val, acc_val, state_val = session.run([merged, loss_op, accuracy, output], feed_dict={X: X_val, y: y_val, keep_prob :1.0, weight_decay:0.0})
                     validation_writer.add_summary(summary, validation_counter)
                     train_counter+=display_step
                     validation_counter+=display_step
+                    
+                    if math.isnan(loss_val):
+                        sys.exit("\n!!! Explosion of gradients !!! \nTerminating program!")
                     
                     print("Epoch {}, Batch Split {}".format(epoch, i+1) + ", Minibatch Loss= " + \
                       "{:.4f}".format(loss_train) + ", Minibatch Training Accuracy= " + \
@@ -258,8 +267,7 @@ def run_train(session, train_x, train_y):
                     #   1.1. If the average of last 'patience' iterations are less than 'average_loss_baseline'
                     
                     costs_inter.append(loss_val)            # append validation loss to costs_inter
-                    
-                    if loss_val < best_loss_val:            # if improved validation loss found
+                    if loss_val <= best_loss_val:            # if improved validation loss found
                         best_loss_val = loss_val            # set current validation loss to best_loss_val
                         best_train_acc = acc_train          # set current training accuracy to best_train_acc
                         best_val_acc = acc_val              # set current validation accuracy to acc_val
@@ -272,35 +280,19 @@ def run_train(session, train_x, train_y):
                         
                     if last_improvement > patience:         # if no improvement seen over 'patience' number of steps
                         print("\nNo improvement found during the last {} iterations".format(patience))
-                        print('Avg validation loss over this period: ', sum(costs_inter)/len(costs_inter))  
                         
-                        if (sum(costs_inter)/len(costs_inter)) > average_loss_baseline:      # if average of validation loss greater than 'average_loss_baseline' (a hyper-parameter to optimize)      
-                            # final stopping condition
-                            print('Avg validation loss > {}\nStopping optimization'.format(average_loss_baseline))
-                            print('Recording training and validation states at cost of early-stopping')
-                            save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
-                            return acc_results, loss_results
-                        else:                                                   # else, save checkpoint and reset costs_inter and last_improvement
-                            print('\nSaving Checkpoint! Avg validation loss < {}'.format(average_loss_baseline))
-                            _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
-                            print('<<<Model Checkpoint saved>>>')
-                            print('<<<State Checkpoint saved>>>')
-                            save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-'+str(epoch)+'.hdf5')
+                        # final stopping condition
+                        print('Recording training and validation states at cost of early-stopping')
+                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
+                        return acc_results, loss_results
+                    elif epoch % 100 == 0:                                                   # else, save checkpoint and reset costs_inter and last_improvement
+                        print('\nSaving Checkpoint...')
+                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
+                        print('<<<Model Checkpoint saved>>>')
+                        print('<<<State Checkpoint saved>>>')
+                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-'+str(epoch)+'.hdf5')
+                        print('Continuing Training...\n')
                             
-                            print('Last improvement was: Training acc = {}, Validation acc = {} observed at {}'.format(best_train_acc, best_val_acc, best_loss_observed_epoch)) # the best result seen before 'no improvements'
-                            
-                            # to_log = 'Best result: m_{}_{}.ckpt-{}'.format(best_train_acc, best_val_acc, best_loss_observed_epoch)
-                            # file_op = open(TRAINING_LOG,"a+") 
-                            # file_op.write(to_log + '\n')
-                            # file_op.close()
-                            
-                            print('Continuing Training...\n')
-                            costs_inter = []
-                            last_improvement = 0
-                            best_loss_val = 1000000
-                            best_train_acc = 0  
-                            
-                    
                     #...... END EARLY STOPPING EVALUATION ......
                     
                     if epoch == training_steps:                                 # do not change this intendation to make sure this line run only once and not for each split of the epoch!
