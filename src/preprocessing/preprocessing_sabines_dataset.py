@@ -22,6 +22,8 @@ GlOBAL CONSTANTS & FILES
 '''
 # File List:
 RAW_TRAIN_DATA = "../../data/raw_data/Sabine_training_data.xml"
+RAW_TRAIN_DATA_REDUCED = "../../data/raw_data/Sabine_training_data_reduced.xml"
+RAW_VALIDATION_DATA = "../../data/raw_data/validation_set.xml"
 
 def fit_to_size(matrix, shape): 
     res = np.zeros(shape)
@@ -63,11 +65,16 @@ def get_data(data_file, data_type="TRAIN"):
     return train_json
 
 if __name__ == "__main__":
-    all_sentences = get_data(RAW_TRAIN_DATA)
-        
+    data_to_be_preprocessed = get_data(RAW_TRAIN_DATA)
     with open('../../data/preprocessed_data/preprocessed_training_set.json', 'w') as fp:
-        json.dump(all_sentences, fp)    
+        json.dump(data_to_be_preprocessed, fp)    
         
-    print('Preprocessing Complete!')
+    print('Preprocessing of Train set Complete!')
+    print('File {} saved to {}'.format('preprocessed_training_set.json', '../../data/preprocessed_data/'))
     
+    data_to_be_preprocessed = get_data(RAW_TRAIN_DATA_REDUCED)
+    with open('../../data/preprocessed_data/preprocessed_reduced_training_set.json', 'w') as fp:
+        json.dump(data_to_be_preprocessed, fp)    
+        
+    print('Preprocessing of Validation set Complete!')
     print('File {} saved to {}'.format('preprocessed_training_set.json', '../../data/preprocessed_data/'))

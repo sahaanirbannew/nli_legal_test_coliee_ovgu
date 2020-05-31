@@ -11,6 +11,7 @@ Created on Wed May 13 22:05:49 2020
 
 
 import json
+import re
 import numpy as np
 from nltk import word_tokenize 
 from similarity import similarity_negation_vector as sn

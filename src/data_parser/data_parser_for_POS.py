@@ -29,7 +29,7 @@ law2Vec_doc = "../data/Law2Vec/Law2Vec.200d.txt"
 Define & initialize global constants
 '''
 
-NORMALIZE = True
+NORMALIZE = False
 REPLACE_NUMBERS_WITH_D = True
 
 PTB_UNIVERSAL_MAP = tagset_mapping('en-ptb', 'universal')

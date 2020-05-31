@@ -18,6 +18,7 @@ from similarity import similarity_negation_vector as sn
 from nltk import word_tokenize 
 from nltk import pos_tag
 from nltk.tag.mapping import tagset_mapping
+from sklearn import preprocessing
 
 '''
 Location of file(s) required to run the program

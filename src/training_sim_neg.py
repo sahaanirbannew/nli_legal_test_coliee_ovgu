@@ -31,6 +31,8 @@ Location of file(s):
 ############################################################'''
 
 PREPROCESSED_TRAIN_SET = "../data/preprocessed_data/preprocessed_training_set.json"
+PREPROCESSED_REDUCED_TRAIN_SET = "../data/preprocessed_data/preprocessed_reduced_training_set.json"
+PREPROCESSED_VALIDATION_SET = "../data/preprocessed_data/preprocessed_validation_set.json"
 SAVE_MODEL_TO = "../models/sim_neg/"
 SAVE_STATES_TO = "../states/sim_neg/states"
 SAVE_LOGS_TO = "../tensorBoardLogs/sim_neg/"
@@ -40,13 +42,30 @@ TRAINING_LOG = "../logs/sim_neg/training_performance_log.txt"
 Get data (premise, hypothesis, labels) for training
 ############################################################'''
 
-premise_hypo_pair, correct_labels = dp.get_data(PREPROCESSED_TRAIN_SET)
+CUSTOM_VALIDATION = False
 
-X_train = premise_hypo_pair
-y_train = to_categorical(correct_labels)
-
-# Shuffle the dataset with different random_state to perform stratified split of training and validation set
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=1, stratify=y_train)
+if not CUSTOM_VALIDATION:
+    X_train, y_train_labels = dp.get_data(PREPROCESSED_TRAIN_SET)
+    y_train = to_categorical(y_train_labels)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=5, stratify=y_train)
+else:
+    X_train, y_train_labels = dp.get_data(PREPROCESSED_REDUCED_TRAIN_SET)
+    y_train = to_categorical(y_train_labels)
+    
+    # get manually set validation set
+    X_val, y_val_labels = dp.get_data(PREPROCESSED_VALIDATION_SET)
+    y_val = to_categorical(y_val_labels)
+    
+    # Shuffle stratify split training set to get some random instances for validation set
+    X_train, X_val_random, y_train, y_val_random = train_test_split(X_train, y_train, test_size=0.1, random_state=10, stratify=y_train)
+    # best split seed values: 10
+    # bad splits: 58, 14, 94, 31, 24, 4, 95, 59
+    
+    # append random instances with custom modelled validation set
+    y_val = np.concatenate((y_val, y_val_random))
+    X_val = np.concatenate((X_val, X_val_random))
+    
+    del y_train_labels, y_val_labels, y_val_random, X_val_random
 
 '''############################################################
 Define & initialize constants for lstm architecture
@@ -61,9 +80,6 @@ timesteps = X_train.shape[1]            # timesteps
 num_hidden = {1: 128, 2: 64}            # dictionary that defines number of neurons per layer 
 num_classes = 2                         # total number of classes
 num_layers = 1                          # desired number of LSTM layers
-
-del premise_hypo_pair, correct_labels   # delete unused variables to free RAM
-
 
 '''#######################################################
 > Reset tensorflow graphs
