@@ -1,0 +1,184 @@
+<Dataset><pair><id>H24-27-I</id><t1>
+Article 641 
+The party ordering work may cancel the contract at any time whilst the contractor has not completed the work by compensating any damages.
+</t1><t2>
+The party ordering work may cancel the contract at any time whilst the contractor has not completed the work by compensating any damages.
+</t2><Label>Y</Label></pair><pair><id>H27-32-I</id><t1>
+Article 847 
+Any person who falls under any of the following items may not become a guardian:
+(i) a minor;
+(ii) a legal representative, curator, or assistant who has been replaced by the family court;
+(iii) a bankrupt;
+(iv) a person who has brought or is bringing an action against the ward, or a spouse or lineal blood relative by blood of such person; or
+(v) a person whose whereabouts are unknown.
+</t1><t2>
+A bankrupt may not become a guardian.
+</t2><Label>Y</Label></pair><pair><id>H22-1-I</id><t1>
+(Capacity to Receive the Manifestation of Intention)Article 98-2
+In cases the other party to the manifestation of intention is a minor or an adult ward at the time when the other party receives such manifestation of intention, the person who made the manifestation of intention may not assert his/her manifestation of intention against such other party;provided, however, that, this shall not apply after the statutory agent of such other party has acquired the knowledge of such manifestation of intention.
+</t1><t2>
+If the other party of a manifestation of intention was a minor when the manifestation of intention was received, that manifestation of intention does not take effect.
+</t2><Label>N</Label></pair><pair><id>H27-35-I</id><t1>
+Article 987 
+A person with a duty of testamentary gift (in this Section, a person who bears a duty to perform a testamentary gift) or any other interested party may give notice to a testamentary donee to the effect that acceptance or renunciation of a testamentary gift should be made within a specified period, fixing a period that is reasonable. 
+In this case, if a donee does not indicate his/her intention to a person with a duty of testamentary gift within that period, the testamentary gift shall be deemed to have been accepted.
+</t1><t2>
+In cases where a person with a duty of testamentary gift gives notice to a testamentary donee to the effect that acceptance or renunciation of a testamentary gift should be made within a specified period, fixing a period that is reasonable, if a donee does not indicate his/her intention to a person with a duty of testamentary gift within that period, the testamentary gift shall be deemed to have been accepted.
+</t2><Label>N</Label></pair><pair><id>H22-21-2</id><t1>
+(Method of Tender of Performances)Article 493
+The tender of the performance must be made actually consistent with the main purport of the obligation;provided, however, that, if the obligee refuses to accept such performance in advance, or any act is required on the part of the obligee with respect to the performance of the obligation, it shall be sufficient if the obligor demands the acceptance thereof by giving a notice that the tender of the performance has been prepared.
+</t1><t2>
+Even if the obligor of a monetary debt brings cash to the address of the obligee and demands acceptance, in cases where the obligee refuses to accept, even if the cash is not presented in front of the obligee, the provision is deemed as actual.
+</t2><Label>Y</Label></pair><pair><id>H22-1-A</id><t1>
+(Juristic Act of Minors)Article 5(1)A minor must obtain the consent of his/her statutory agent to perform any juristic act;provided, however, that, this shall not apply to an act merely intended to acquire a right or to be relieved of a duty.(2)A juristic act in contravention of the provision of the preceding paragraph may be rescinded.(3)Notwithstanding the provision of paragraph 1, in cases the statutory agent permits the disposition of property by specifying the purpose thereof, a minor may freely dispose of the same to the extent of such purpose.The same shall apply in cases his/her statutory agent permits the disposition of the property without specifying any purpose.
+</t1><t2>
+A minor can freely dispose of assets the statutory agent permits the disposition without specifying the purpose.
+</t2><Label>Y</Label></pair><pair><id>H22-5-I</id><t1>
+(Method and Effect of Set-offs)Article 506(1)Set-offs shall be effected by means of manifestation of one party's intention to the other.In such case, no condition or time limit may be added to such manifestation of intention.(2)The manifestation of intention set forth in the preceding paragraph shall take effect retroactively as of the time when the obligations of both parties became due and suitable for set-off.
+</t1><t2>
+A time limit can be added to the manifestation of intention of offset, but conditions cannot be added.
+</t2><Label>N</Label></pair><pair><id>H22-3-E</id><t1>
+(Requirements for Ratification)Article 124(1)A ratification shall not be effective unless it is made after the circumstance(s) that made the act rescindable ceases to exist.(2)If an adult ward recognizes his/her act after he/she has become a person with capacity to act, he/she may ratify such act only after such recognition.(3)The provisions of the preceding two paragraphs shall not apply in cases the ratification is made by the statutory agent, or the curator or assistant of the person with limited capacity to act.
+(Statutory Ratification)Article 125
+If, after the time when it has become possible to ratify an act pursuant to the provisions of the preceding Article, any of the following events occurs with respect to an act which is otherwise rescindable, it is deemed that ratification has been made,unless any objection is reserved:(i)performance of such act, in whole or in part;(ii)demand for the performance of such act;(iii)novation of such act;(iv)provision of security;(v)assignment, in whole or in part, of any right acquired as a result of such rescindable act; or(vi)compulsory execution of such act.
+</t1><t2>
+Even when a person, who carries a purchase-money obligation due to the sale of real property, while a minor pays the purchase money after becoming an adult, the person can rescind the sale with the reason of being a minor at the time of the sale.
+</t2><Label>N</Label></pair><pair><id>H19-26-I</id><t1>
+(Grounds for Termination of Mandate)Article 653
+A mandate shall terminate when:(i)The mandator or mandatary dies;(ii)The mandator or mandatary is subject to a ruling for the commencement of bankruptcy procedures;(iii)The mandatary is subject to an order for the commencement of guardianship.
+</t1><t2>
+The mandate shall terminate when the mandatary is subject to a ruling for the commencement of bankruptcy procedures, but shall not terminate when the mandator is subject to such ruling.
+</t2><Label>N</Label></pair><pair><id>H22-5-U</id><t1>
+(Forfeiture of Benefit of Time)Article 137
+The obligor may not assert the benefit of time if:(i)the obligor has become subject to the ruling of the commencement of bankruptcy procedures;(ii)the obligor has destroyed, damaged, or diminished the security; or(iii)the obligor fails to provide security when it has the obligation to do so.
+</t1><t2>
+In cases where the obligor of monetary debt has the obligation to provide security, if the security is not provided, the obligor cannot assert the benefit of the time.
+</t2><Label>Y</Label></pair><pair><id>H27-29-O</id><t1>
+Article 728 
+(1) The relationship between relatives by affinity shall come to an end by divorce.
+(2) The same shall apply in the case where a spouse has died and the surviving spouse indicates an intention to end the relationship between relatives by affinity.
+</t1><t2>
+In the case where a husband and wife divorce, the relationship between relatives by affinity shall come to an end; however, in the case where a spouse has died, only if the surviving spouse indicates an intention to end the relationship between relatives by affinity, the relationship shall come to an end.
+</t2><Label>Y</Label></pair><pair><id>H27-36-A</id><t1>
+Article 297 
+(1) A holder of a right of retention may collect fruits derived from the Thing retained, and appropriate the same to the satisfaction of his/her claim prior to other obligees.
+(2) The fruits under the preceding paragraph must be appropriated first to the payment of interest on the claim, and any remainder must be appropriated to the satisfaction of the principal.
+</t1><t2>
+A holder of a right of retention may collect fruits derived from the Thing retained, and appropriate the same to the satisfaction of his/her claim prior to other obligees, but the fruits must be appropriated to the payment of interest on the claim, and any remainder must not be appropriated to the satisfaction of the principal.
+</t2><Label>N</Label></pair><pair><id>H18-29-4</id><t1>
+(Special Provisions for Monetary Debt)Article 419(1)The amount of the damages for failure to perform any obligation for the delivery of any money shall be determined with reference to the statutory interest rate;provided, however, that, in cases the agreed interest rate exceeds the statutory interest rate, the agreed interest rate shall prevail.(2)The obligee shall not be required to prove his/her damages with respect to the damages set forth in the preceding paragraph.(3)The obligor may not raise the defense of force majeure with respect to the damages referred to in paragraph 1.
+</t1><t2>
+In a demand for compensation based on delayed performance of loan claim, if person Y gives proof that the delayed performance is not based on the reasons attributable to him or herself, person Y shall be relieved of the liability.
+</t2><Label>N</Label></pair><pair><id>H25-2-U</id><t1>
+Article 95 
+Manifestation of intention has no effect when there is a mistake in any element of the juristic act in question;provided, however, that the person who made the manifestation of intention may not assert such nullity by himself/herself if he/she was grossly negligent.
+</t1><t2>
+In cases any third party commits any fraud inducing any person to make a manifestation of intention to the other party, and the other party did not know such fact, if such manifestation of intention meets the requirement for invalid by mistake, the person who made such manifestation of intention may assert nullity.
+</t2><Label>Y</Label></pair><pair><id>H26-12-C</id><t1>
+Article 213 
+(1) If the partition of land creates a parcel of land that has no access to public roads, the owner of such parcel of land may pass to the public roads only through the lands owned by others who participated in the partition.
+In such cases, it shall not be necessary to pay compensation.
+(2) The provisions of the preceding paragraph shall apply mutatis mutandis to cases where the owner of land assigns part of his/her land to others.
+</t1><t2>
+If the partition of land creates a parcel of land that has no access to public roads, the owner of such parcel of land may pass to the public roads only through the lands owned by others who participated in the partition. 
+In such cases, it shall not be necessary to pay compensation.
+</t2><Label>Y</Label></pair><pair><id>H22-4-E</id><t1>
+(Right of Notice of Counterparty of Unauthorized Agency)Article 114
+In the case referred to in the preceding Article, the counterparty may require the principal, by fixing a reasonable period of time, to make a definite answer on whether or not he/she will ratify within such period of time.In such case, if the principal fails to make any definite answer within such period, he/she is deemed to have refused to ratify.
+</t1><t2>
+For a contract completed by an unauthorized agent, regardless of the fact that the counterparty requires the principal, by fixing a reasonable period of time, to make a definite answer on whether or not he/she will ratify within such period of time , if no definite answer has been given, the other party can demand execution of the contract to the principal.
+</t2><Label>N</Label></pair><pair><id>H27-35-O</id><t1>
+Article 114 
+In the case referred to in the preceding Article, the counterparty may require the principal, by fixing a reasonable period of time, to make a definite answer on whether or not he/she will ratify within such period of time.
+In such case, if the principal fails to make any definite answer within such period, he/she is deemed to have refused to ratify.
+</t1><t2>
+In cases where, with respect to a contract for sale concluded by a unauthorized agent, the counterparty requires the principal, by fixing a reasonable period of time, to make a definite answer on whether or not he/she will ratify within such period of time, if the principal fails to make any definite answer within such period, he/she is deemed to have ratified the contract for sale.
+</t2><Label>N</Label></pair><pair><id>H26-31-A</id><t1>
+Article 834-2 
+(1) If a child's interests are harmed due to difficulty or inappropriateness in the exercise of parental authority by his/her father or mother, the family court may, at the request of the child, any relative of the child, a guardian of a minor, a supervisor of a guardian of a minor, or a public prosecutor, make a ruling of suspension of parental authority with regard to the father or mother.
+(2) If the family court makes a ruling of suspension of parental authority, it shall determine the period of suspension of parental authority within a period not exceeding two years, taking into account the period expected to be required for the cause thereof to cease to exist, the physical and mental conditions, and the living circumstances of the child, and all other circumstances.
+</t1><t2>
+If a child's interests are harmed due to difficulty or inadequate in the exercise of parental authority by his/her father or mother, the family court may make a ruling of suspension of parental authority with regard to the father or mother without determining the period.
+</t2><Label>N</Label></pair><pair><id>H29-32-E</id><t1>
+Article 819 
+(1) If parents divorce by agreement, they may agree upon which parent shall have parental authority in relation to a child.
+(2) In the case of judicial divorce, the court shall determine which parent shall have parental authority.
+(3) In the case where parents divorce before the birth of a child, the mother shall exercise parental rights and duties; provided that the parties may agree that the father shall have parental authority after the child is born.
+(4) A father shall only exercise parental authority with regard to a child of his that he has affiliated if both parents agree that he shall have parental authority.
+(5) When the parents do not, or cannot, make the agreements referred to in paragraph (1), paragraph (3), and the preceding paragraph, the family court may, at the request of the father or the mother, make a ruling in lieu of agreement.
+(6) The family court may, at the request of any relative of the child, rule that the other parent shall have parental authority in relation to the child if it finds it necessary for the interests of the child.
+</t1><t2>
+In the case where the married couple A and B has a minor child, they may not agree that both of A and B shall have parental authority in relation to the child, even by agreement upon divorce by agreement.
+</t2><Label>Y</Label></pair><pair><id>H26-31-C</id><t1>
+Article 819 
+(1) If parents divorce by agreement, they may agree upon which parent shall have parental authority in relation to a child.
+(2) In the case of judicial divorce, the court shall determine which parent shall have parental authority.
+(3) In the case where parents divorce before the birth of a child, the mother shall exercise parental rights and duties; provided that the parties may agree that the father shall have parental authority after the child is born.
+(4) A father shall only exercise parental authority with regard to a child of his that he has affiliated if both parents agree that he shall have parental authority.
+(5) When the parents do not, or cannot, make the agreements referred to in paragraph (1), paragraph (3), and the preceding paragraph, the family court may, at the request of the father or the mother, make a ruling in lieu of agreement.
+(6) The family court may, at the request of any relative of the child, rule that the other parent shall have parental authority in relation to the child if it finds it necessary for the interests of the child.
+</t1><t2>
+In the case where parents divorce before the birth of a child, the family court shall derermine which parent shall, at the request of the father or the mother, have parent authority. 
+</t2><Label>N</Label></pair><pair><id>H26-30-4</id><t1>
+Article 810 
+An adopted child shall take the surname of his/her adoptive parent(s); provided that this shall not apply to an adopted child who has changed his/her surname by marriage and continues to use the surname determined at the time of marriage.
+</t1><t2>
+In the case where A and B married and adopted the surname of A, and they divorced when their child, C was 18 years old; provided that C was married to E and used E's surname at the time of A and B's divorceeven if F subsequently adopts C as his/her child, C may not take F's surname.
+</t2><Label>Y</Label></pair><pair><id>H26-32-I</id><t1>
+Article 817-9 
+The legal relationship between an adopted child and his/her natural parents and relative by bloods shall be extinguished by a ruling of special adoption; provided that this shall not apply to the legal relationship with the other party referred to in the provision of the proviso to paragraph (2) of Article 817-3 and his/her relative by bloods.
+</t1><t2>
+In case where A (30 years old) and B (30 years old) are a couple and they adopt E (4 years old) who is child between C (42 years old) and D (42 years old) and they are not a couple.
+C affiliated E and D has parental authority in relation to E.
+In making a ruling of special adoption between the couple, A and B, and Ethe legal relationship between E and his/her natural parents, C and E, shall be extinguished.
+</t2><Label>Y</Label></pair><pair><id>H25-14-U</id><t1>
+Article 308 
+Statutory liens for employer-employee relationships shall exist with respect to salaries and other claims that arose under the employer-employee relationship between the obligor and his/her employee.
+</t1><t2>
+Statutory liens for employer-employee relationships shall exist with respect to salaries and other claims that arose under the employer-employee relationship between the obligor and his/her employee.
+</t2><Label>Y</Label></pair><pair><id>H21-21-4</id><t1>
+(Performance by Third-party Obligor who had been Ordered to Suspend Payment)Article 481(1)If a third-party obligor who has been enjoined from making payment has paid his/her obligation to his/her own obligee, the relevant attaching obligee shall be entitled to request such third-party obligor to make payment de novo to the extent he/she suffered the damages.(2)The provision of the preceding paragraph shall not preclude the relevant third-party obligor from exercising his/her right to obtain reimbursement from his/her obligee.
+</t1><t2>
+If a third party obligor who has been enjoined from making payment has paid his/her obligation to his/her own obligee, the relevant obligee shall not entitled to request such third party obligor to make payment, even to the extent he/she suffered the damages.
+</t2><Label>N</Label></pair><pair><id>H24-22-4</id><t1>
+Article 491 
+(1) In cases where the obligor should pay the principal as well as the applicable interest and expenses with respect to one or more obligation(s), if the person who must perform tenders any performance which is not sufficient to extinguish such obligation in its entirety, such performance must be allocated first to the expense, and then to the interest and principal, in this order.
+(2) The provision of Article 489 shall apply mutatis mutandis to the cases set forth in the preceding paragraph.
+</t1><t2>
+In cases where the obligor should pay the principal as well as the applicable interest and expenses with respect to one or more obligation(s), if the person who must perform tenders any performance which is not sufficient to extinguish such obligation in its entirety, such performance shall be allocated first to the expense, and then to the interest and principal, in this order.
+</t2><Label>Y</Label></pair><pair><id>H29-25-E</id><t1>
+Article 553 
+With respect to gifts with burden, in addition to the provisions of this Section, the provisions regarding bilateral contracts shall apply mutatis mutandis, to the extent those provisions are not inconsistent with the nature of gifts with burden.
+</t1><t2>
+With respect to gifts, even if they are with burden, the provisions regarding bilateral contracts shall not apply mutatis mutandis.
+</t2><Label>N</Label></pair><pair><id>H22-14-O</id><t1>
+(Identification of Alternative Obligation due to Impossibility)Article 410(1)If any performance which is included in the subject of a claim is impossible from the beginning, or later becomes impossible, the claim shall exist to the extent of the performance which still remains.(2)If any performance has become impossible due to the negligence of any party who does not have any right of choice, the provision of the preceding paragraph shall not apply.
+</t1><t2>
+If the subject of the claim is to be identified by way of choice among two performances, if one of the performances becomes impossible in the future not due to fault of persons involved that do not possess the right to choose, then the subject of the claim is identified  as the other performance.
+</t2><Label>Y</Label></pair><pair><id>H23-1-3</id><t1>
+(Fraud or Duress)Article 96(1)Manifestation of intention which is induced by any fraud or duress may be rescinded.(2)In cases any third party commits any fraud inducing any person to make a manifestation of intention to the other party, such manifestation of intention may be rescinded only if the other party knew such fact.(3)The rescission of the manifestation of intention induced by the fraud pursuant to the provision of the preceding two paragraphs may not be asserted against a third party without knowledge.
+(Damages in Torts)Article 709
+A person who has intentionally or negligently infringed any right of others, or legally protected interest of others, shall be liable to compensate any damages resulting in consequence.
+</t1><t2>
+In cases where the person who makes the manifestation believes a fictitious explanation of the counterparty and makes a manifestation of intention, if there was no intention of fraud for the counterparty, the person who makes the manifestation will not be rescued under Civil Code.
+</t2><Label>N</Label></pair><pair><id>H20-12-1</id><t1>
+(Exercise of Rights of Retention and Extinctive Prescription of Claims)Article 300
+The exercise of a right of retention shall not preclude the running of extinctive prescription of claims.
+(Mutatis Mutandis Application of Provisions on Rights of Retention and Statutory Liens)Article 350
+The provisions of Articles 296 through 300 and those of Article 304 shall apply mutatis mutandis to pledges.
+</t1><t2>
+Even while a holder of a right of retention continually possesses the retained object, extinctive prescription progresses for that secured claim, but if the pledgee continually possesses the Thing pledged, then the extinctive prescription for that secured claim may be interrupted.
+</t2><Label>N</Label></pair><pair><id>H26-18-4</id><t1>
+Article 439 
+If the prescription is completed with respect to one joint and several obligor, the other joint and several obligors also shall be relieved of liability to the extent of the portion of the obligation which is borne by such joint and several obligor.
+</t1><t2>
+In cases where B, C and D bears a joint and several obligation of 3 million yen to A and where each of them have the equally proportionate obligations; even if the prescription is completed with respect to B, C and D shall bear a joint and several obligation of 3 million yen to A.
+</t2><Label>N</Label></pair><pair><id>H18-29-5</id><t1>
+(Special Provisions for Monetary Debt)Article 419(1)The amount of the damages for failure to perform any obligation for the delivery of any money shall be determined with reference to the statutory interest rate;provided, however, that, in cases the agreed interest rate exceeds the statutory interest rate, the agreed interest rate shall prevail.(2)The obligee shall not be required to prove his/her damages with respect to the damages set forth in the preceding paragraph.(3)The obligor may not raise the defense of force majeure with respect to the damages referred to in paragraph 1.
+</t1><t2>
+In cases where person X demands compensation of damages of 5% per annum from the day after the due date based on delay of performance of payment of sale purchase money, person X is not required to give proof of either occurrence of the damage  or the amount of it
+</t2><Label>Y</Label></pair><pair><id>H20-28-O</id><t1>
+(Liability of Possessor and Owner of Structure on Land)Article 717(1)If any defect in the installation or preservation of any structure on land causes damages to others, the possessor of such structure shall be liable to the victims to compensate for those damages;provided, however, that, if the possessor has used necessary care to prevent the damages arising, the owner must compensate for the damages.(2)The provisions of the preceding paragraph shall apply mutatis mutandis to cases where there is any defect in the planting or support of bamboos and trees.(3)In the cases of the preceding two paragraphs, if there is another person who is liable for the cause of the damages, the possessor or owner may exercise their right to obtain reimbursement against such person.
+</t1><t2>
+If a plaintiff files against a land owner as a defendant, and demands compensation of damages based on the liability of owner of structure on land proviso in Civil Code Article 717, Paragraph 1, the defendant may not assert that he/she exercised his/her required duty of care in order to prevent the occurrence of the results as an affirmative defense, but he/she may assert his/her own doli incapax as an affirmative defense.
+</t2><Label>N</Label></pair></Dataset>
