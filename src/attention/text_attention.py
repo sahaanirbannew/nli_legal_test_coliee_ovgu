@@ -7,15 +7,19 @@
 
 ## convert the text/attention list to latex code, which will further generates the text heatmap based on attention weights.
 import numpy as np
+import matplotlib.pyplot as plt
 
 latex_special_token = ["!@#$%^&*()"]
 
-def generate(text_list, attention_list, latex_file, color='red', rescale_value = True):
+def generate(text_list, attention_list, latex_file, name , color='blue', rescale_value = True):
+	if name == 'neg':
+		text_list.append('NEG')
 	assert(len(text_list) == len(attention_list))
 	if rescale_value:
 		attention_list = rescale(attention_list)
 	word_num = len(text_list)
 	text_list = clean_word(text_list)
+	
 	with open(latex_file,'w') as f:
 		f.write(r'''\documentclass[varwidth]{standalone}
 \special{papersize=210mm,297mm}

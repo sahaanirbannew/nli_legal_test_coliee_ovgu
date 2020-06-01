@@ -115,9 +115,9 @@ def BiRNN(x, weights, bias):
 
     for i in range(num_layers):
 
-        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0)          # define forward lstm cell with hidden cells
+        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.relu)          # define forward lstm cell with hidden cells
         lstm_fw_cell = rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=0.5)       # define dropout over hidden forward lstm cell
-        lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0)          # define backward lstm cell with hidden cells
+        lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0,, activation=tf.nn.relu)          # define backward lstm cell with hidden cells
         lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,  output_keep_prob=0.5)      # define dropout over hidden backward lstm cell
 
         output = tf.nn.relu(tf.matmul(output, tf.cast(weights['w1'], tf.float32)) + bias['b1'])     # weights introduced to use relu activation
@@ -399,5 +399,3 @@ with tf.compat.v1.Session() as sess:
     pickle.dump(attention_scores,f)
 
     print('Attention scores saved to {}\{}'.format(os.getcwd(), SAVE_SCORES_TO))
-
-    
