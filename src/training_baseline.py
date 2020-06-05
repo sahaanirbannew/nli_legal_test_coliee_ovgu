@@ -19,6 +19,8 @@ from data_parser import data_parser_for_baseline as dp
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
 
 import tensorflow as tf
 from tensorflow.contrib import rnn
@@ -147,8 +149,12 @@ def BiRNN(x, weights, bias):
             # Venky: rnn cell output  --> currently this is not used for LSTMVis
             outputs = tf.unstack(output, timesteps, 0)
             outputs = tf.transpose(outputs, perm=[1, 0, 2]) 
+            
+            if i == num_layers-1: #last layer
+               _ = tf.concat([state_fw.c, state_bw.c], axis=1, name='bidirectional_concat_c')
+               _ = tf.concat([state_fw.h, state_bw.h], axis=1, name='bidirectional_concat_h')
     
-    return tf.add(tf.matmul(output[-1], weights['out']), bias['out']), outputs
+    return tf.add(tf.matmul(output[-1], weights['out']), bias['out']), outputs 
     
 '''############################################################
 Define: activation, loss, regularization, optimizer,
@@ -156,14 +162,13 @@ Define: activation, loss, regularization, optimizer,
 ############################################################'''
 
 with tf.name_scope("output"):
-    logits, output = BiRNN(X, fc_weights, fc_biases)
+    logits, output, = BiRNN(X, fc_weights, fc_biases)
     prediction = tf.nn.softmax(logits, name='prediction')   # applies softmax over BiRNN output to calculate predicted values
 
 with tf.name_scope("accuracy"):
     correct_predictions = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))                       # obtain correct predictions on comparison with actual labels
     accuracy = tf.reduce_mean(tf.cast(correct_predictions, 'float'), name="accuracy")               # mean of correct predictions
     tf.compat.v1.summary.scalar('accuracy', accuracy)
-
 
 with tf.name_scope("loss"):
     loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y))      # calculate loss 
@@ -205,6 +210,30 @@ def save_LSTM_states(states_inter, state_val, SAVE_STATES_TO):
     with h5py.File(SAVE_STATES_TO, 'w') as hf:
         hf.create_dataset("d1",  data= val_1)
     print('LSTM states saved to {}'.format(SAVE_STATES_TO))
+
+def plot_confusion(y_test, pred):
+    labels = [0, 1]
+    cm = confusion_matrix(y_test, pred, labels)
+    precision = cm[1][1] / (cm[1][1] + cm[0][1])
+    recall = cm[1][1] / (cm[1][1] + cm[1][0])
+    print('Confusion Matrix')
+    print(cm)
+    print('Precision: {}'.format(precision))
+    print('Recall: {}'.format(recall))
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(cm, cmap='summer')
+    
+    for (i, j), z in np.ndenumerate(cm):
+        ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
+    
+    plt.title('Confusion matrix of Baseline')
+    fig.colorbar(cax)
+    ax.set_xticklabels([''] + labels)
+    ax.set_yticklabels([''] + labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
 
 def run_train(session, train_x, train_y):
     '''
@@ -259,7 +288,7 @@ def run_train(session, train_x, train_y):
                     summary, loss_train, acc_train = session.run([merged, loss_op, accuracy], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})
                     train_writer.add_summary(summary, train_counter)
                     
-                    summary, loss_val, acc_val, state_val = session.run([merged, loss_op, accuracy, output], feed_dict={X: X_val, y: y_val, keep_prob :1.0, weight_decay:0.0})
+                    summary, loss_val, acc_val, pred_val, state_val = session.run([merged, loss_op, accuracy, prediction, output], feed_dict={X: X_val, y: y_val, keep_prob :1.0, weight_decay:0.0})
                     validation_writer.add_summary(summary, validation_counter)
                     train_counter+=display_step
                     validation_counter+=display_step
@@ -293,14 +322,20 @@ def run_train(session, train_x, train_y):
                         last_improvement +=1                # else, increment last_improvement
                         
                     if last_improvement > patience:         # if no improvement seen over 'patience' number of steps
+                        print('\n Validation Confusion Matrix: ')    
+                        plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
                         print("\nNo improvement found during the last {} iterations".format(patience))
+                        
+                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch) 
                         
                         # final stopping condition
                         print('Recording training and validation states at cost of early-stopping')
                         save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
                         return acc_results, loss_results
                         
-                    elif epoch % 500 == 0:                                                   # else, save checkpoint and reset costs_inter and last_improvement
+                    elif epoch % 100 == 0:                                                   # else, save checkpoint and reset costs_inter and last_improvement
+                        print('\n Validation Confusion Matrix: ')    
+                        plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
                         print('\nSaving Checkpoint...')
                         _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
                         print('<<<Model Checkpoint saved>>>')
@@ -313,6 +348,8 @@ def run_train(session, train_x, train_y):
                     #...... END EARLY STOPPING EVALUATION ......
                     
                     if epoch == training_steps:                                 # do not change this intendation to make sure this line run only once and not for each split of the epoch!
+                        print('\n Validation Confusion Matrix: ')    
+                        plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
                         _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)                         # save model to local
                         print('Recording final training and validation states')
                         # append states to list before ending training

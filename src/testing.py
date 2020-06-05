@@ -10,8 +10,13 @@ Created on Sat May  2 10:32:46 2020
 #######################################################'''
 
 import os, json
-import data_parser as dp
-import preprocessing_sabines_dataset as pre 
+import numpy as np
+from data_parser import data_parser_for_simneg as dp
+from preprocessing import preprocessing_sabines_dataset as pre 
+
+
+from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
 
 import tensorflow as tf
 #from tensorflow.contrib import rnn
@@ -23,7 +28,8 @@ Location of file(s) required to run the program
 
 RAW_TEST_DATA = "../data/raw_data/TestData_en.xml"
 LABELS_FILE = "../data/raw_data/test_labels.txt"
-MODEL_FILE = "../models/baseline/m_0.5699999928474426_0.5476190447807312.ckpt-9230.meta"
+ROOT_MODEL_DIR = "../models/sim_neg/"
+META_FILE = "m_0.49056604504585266_0.6666666865348816.ckpt-1000.meta"
 
 
 if os.path.exists('../data/preprocessed_data/preprocessed_test_set.json'):
@@ -37,6 +43,7 @@ else:
     print('\nPreprocessing of Test Set Complete!')
     print('File {} saved to {}'.format('preprocessed_test_set.json',"../data/preprocessed_data/"))
 
+print(os.getcwd())
 
 
 '''################################################
@@ -54,11 +61,11 @@ with open(LABELS_FILE, "r", errors='ignore') as test_labels:
 y_test = to_categorical(y_test)                                     # Categorize labels into binary format
 
 
-'''################################################
-Define & initialize constants for lstm architecture
-    > constants for network architecture
-    > for network optimization
-################################################'''
+# '''################################################
+# Define & initialize constants for lstm architecture
+#     > constants for network architecture
+#     > for network optimization
+# ################################################'''
 
 #learning_rate = 0.000001
 #num_input = X_test.shape[2]             # dimension of each sentence 
@@ -106,23 +113,46 @@ Restore pretrained model and calculate loss and
 accuracy of input test set.
 ################################################'''
 
+def plot_confusion(y_test, pred):
+    labels = [0, 1]
+    cm = confusion_matrix(y_test, pred, labels)
+    precision = cm[1][1] / (cm[1][1] + cm[0][1])
+    recall = cm[1][1] / (cm[1][1] + cm[1][0])
+    print('Confusion Matrix')
+    print(cm)
+    print('Precision: {}'.format(precision))
+    print('Recall: {}'.format(recall))
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(cm, cmap='summer')
+    
+    for (i, j), z in np.ndenumerate(cm):
+        ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
+    
+    plt.title('Confusion matrix of POS_SimNeg')
+    fig.colorbar(cax)
+    ax.set_xticklabels([''] + labels)
+    ax.set_yticklabels([''] + labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.show()
+
+
 tf.compat.v1.reset_default_graph() 
 print('\nRestoring Trained Model...')
-saver = tf.compat.v1.train.import_meta_graph(MODEL_FILE)
+saver = tf.compat.v1.train.import_meta_graph(ROOT_MODEL_DIR+META_FILE)
 with tf.compat.v1.Session() as sess:    
-    saver.restore(sess,tf.train.latest_checkpoint('models/')) # get the latest checkpoint or check the file to see which model to be restored.
+    saver.restore(sess,tf.train.latest_checkpoint(ROOT_MODEL_DIR)) # get the latest checkpoint or check the file to see which model to be restored.
     
     print('Done')
     
     # restore all placeholders, variables & states by their tensor names for rerunning the model
     X = sess.graph.get_tensor_by_name('Placeholder:0')
     y = sess.graph.get_tensor_by_name('Placeholder_1:0')
-    w_1 = sess.graph.get_tensor_by_name('w_1:0')
     w_out = sess.graph.get_tensor_by_name('w_out:0')
-    b_1 = sess.graph.get_tensor_by_name('b_1:0')
     b_out = sess.graph.get_tensor_by_name('b_out:0')
-    fc_weights = {'w1': w_1, 'out': w_out}
-    fc_bias = {'b1': b_1, 'out': b_out}
+    fc_weights = {'out': w_out}
+    fc_bias = {'out': b_out}
     state_c = sess.graph.get_tensor_by_name('output/lstm0/bidirectional_concat_c:0')
     state_h = sess.graph.get_tensor_by_name('output/lstm0/bidirectional_concat_h:0')
     
@@ -142,6 +172,9 @@ with tf.compat.v1.Session() as sess:
         accuracy = tf.reduce_mean(tf.cast(correct_predictions, 'float'), name="accuracy")
     
     # run tensorflow session to print test loss and accuracy by calling corresponding tensors for the input test set
-    loss_test, acc_test = sess.run([loss_op, accuracy], feed_dict={X: X_test, y: y_test})
+    loss_test, acc_test, pred_test = sess.run([loss_op, accuracy, prediction], feed_dict={X: X_test, y: y_test})
 
     print('\nTest Loss = {}, Test Accuracy = {}'.format(loss_test, acc_test))
+    
+    print('\n Test Confusion Matrix: ')    
+    plot_confusion(np.argmax(y_test, axis=1), np.argmax(pred_test, axis=1))
