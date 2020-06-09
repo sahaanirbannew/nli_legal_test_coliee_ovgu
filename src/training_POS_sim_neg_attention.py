@@ -10,7 +10,7 @@ import datetime
 import math
 import pickle
 import numpy as np
-from data_parser import data_parser_for_baseline as dp
+from data_parser import data_parser_for_POS_simneg as dp
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -32,11 +32,11 @@ Location of file(s):
 PREPROCESSED_TRAIN_SET = "../data/preprocessed_data/preprocessed_training_set.json"
 PREPROCESSED_REDUCED_TRAIN_SET = "../data/preprocessed_data/preprocessed_reduced_training_set.json"
 PREPROCESSED_VALIDATION_SET = "../data/preprocessed_data/preprocessed_validation_set.json"
-SAVE_MODEL_TO = "../models/baseline/attention/"
-SAVE_STATES_TO = "../states/baseline/attention/states.hdf5"
-SAVE_SCORES_TO = "../attention_scores/attention_scores_baseline.pkl"
-SAVE_LOGS_TO = "../tensorBoardLogs/baseline/attention/"
-TRAINING_LOG = "../logs/baseline/attention/training_performance_log.txt"
+SAVE_MODEL_TO = "../models/POS_simneg/attention/"
+SAVE_STATES_TO = "../states/POS_simneg/attention/states.hdf5"
+SAVE_SCORES_TO = "../attention_scores/attention_scores.pkl"
+SAVE_LOGS_TO = "../tensorBoardLogs/POS_simneg/attention/"
+TRAINING_LOG = "../logs/POS_simneg/attention/training_performance_log.txt"
 
 '''############################################################
 Get data (premise, hypothesis, labels) for training
@@ -68,7 +68,6 @@ else:
     del y_train_labels, y_val_labels, y_val_random, X_val_random
 
 
-
 '''############################################################
 Define & initialize constants for lstm architecture
     > constants for network architecture
@@ -82,8 +81,6 @@ timesteps = X_train.shape[1]            # timesteps
 num_hidden = {1: 128, 2: 64}            # dictionary that defines number of neurons per layer
 num_classes = 2                         # total number of classes
 num_layers = 1                          # desired number of LSTM layers
-
-
 
 
 '''#######################################################
@@ -139,11 +136,10 @@ def BiRNN(x, weights, bias):
 
     for i in range(num_layers):
 
-        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu )          # define forward lstm cell with hidden cells
+        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)          # define forward lstm cell with hidden cells
         lstm_fw_cell = rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=keep_prob)       # define dropout over hidden forward lstm cell
         lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)          # define backward lstm cell with hidden cells
         lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,  output_keep_prob=keep_prob)      # define dropout over hidden backward lstm cell
-
 
         with tf.compat.v1.variable_scope('lstm'+str(i)):
             try:
@@ -217,12 +213,11 @@ with tf.name_scope("loss"):
     reg_losses = tf.compat.v1.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)                              # apply regularizer over output weights
     loss_op = loss_op + weight_decay * tf.add_n(reg_losses)                                         # add regularization term with loss.
 
-
-
 optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)                                     # apply Adam Optimizer for loss optimization
 gvs = optimizer.compute_gradients(loss_op)                                                      # fetch gradient values
 
 train_op = optimizer.apply_gradients(gvs)                                                       # applied clipped gradients
+
 
 
 
@@ -376,7 +371,6 @@ def run_train(session, train_x, train_y):
                         print('Avg validation loss over this period: ', sum(costs_inter)/len(costs_inter))
 
                         _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
-
                         print('Recording training and validation states at cost of early-stopping')
                         save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
 
@@ -409,6 +403,8 @@ def run_train(session, train_x, train_y):
                         _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)                         # save model to local
 
                         print('Recording final training and validation states')
+                        # append states to list before ending training
+
                         save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
 
                         scores_inter = np.vstack(scores_inter)
