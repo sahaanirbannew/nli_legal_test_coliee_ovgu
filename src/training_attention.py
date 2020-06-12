@@ -5,12 +5,13 @@
 #######################################################'''
 
 import os
+import sys
 import h5py
-import datetime
-import math
+import math 
 import pickle
+import datetime
 import numpy as np
-from data_parser import data_parser_for_baseline as dp
+import get_file_paths as fp
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
@@ -22,6 +23,17 @@ from tensorflow.contrib import rnn
 from keras.utils.np_utils import to_categorical
 
 
+MODEL = 8
+
+if MODEL == 5:
+    from data_parser import data_parser_for_baseline as dp
+elif MODEL == 6:
+    from data_parser import data_parser_for_POS as dp
+elif MODEL == 7:
+    from data_parser import data_parser_for_simneg as dp
+elif MODEL == 8:
+    from data_parser import data_parser_for_POS_simneg as dp
+
 
 '''############################################################
 Location of file(s):
@@ -29,14 +41,8 @@ Location of file(s):
     2. required to save the models & states to
 ############################################################'''
 
-PREPROCESSED_TRAIN_SET = "../data/preprocessed_data/preprocessed_training_set.json"
-PREPROCESSED_REDUCED_TRAIN_SET = "../data/preprocessed_data/preprocessed_reduced_training_set.json"
-PREPROCESSED_VALIDATION_SET = "../data/preprocessed_data/preprocessed_validation_set.json"
-SAVE_MODEL_TO = "../models/baseline/attention/"
-SAVE_STATES_TO = "../states/baseline/attention/states.hdf5"
-SAVE_SCORES_TO = "../attention_scores/attention_scores_baseline.pkl"
-SAVE_LOGS_TO = "../tensorBoardLogs/baseline/attention/"
-TRAINING_LOG = "../logs/baseline/attention/training_performance_log.txt"
+PREPROCESSED_TRAIN_SET, PREPROCESSED_REDUCED_TRAIN_SET, PREPROCESSED_VALIDATION_SET, \
+    SAVE_MODEL_TO, SAVE_STATES_TO, SAVE_SCORES_TO, SAVE_LOGS_TO, TRAINING_LOG, MODEL_NAME = fp.get_file_paths_main(MODEL)
 
 '''############################################################
 Get data (premise, hypothesis, labels) for training
@@ -58,8 +64,6 @@ else:
 
     # Shuffle stratify split training set to get some random instances for validation set
     X_train, X_val_random, y_train, y_val_random = train_test_split(X_train, y_train, test_size=0.1, random_state=10, stratify=y_train)
-    # best split seed values: 10
-    # bad splits: 58, 14, 94, 31, 24, 4, 95, 59
 
     # append random instances with custom modelled validation set
     y_val = np.concatenate((y_val, y_val_random))
@@ -76,15 +80,12 @@ Define & initialize constants for lstm architecture
 ############################################################'''
 
 # Training Parameters
-learning_rate = 0.000001
+learning_rate = 1e-05
 num_input = X_train.shape[2]            # dimension of each sentence
 timesteps = X_train.shape[1]            # timesteps
 num_hidden = {1: 128, 2: 64}            # dictionary that defines number of neurons per layer
 num_classes = 2                         # total number of classes
 num_layers = 1                          # desired number of LSTM layers
-
-
-
 
 '''#######################################################
 > Reset tensorflow graphs
@@ -101,27 +102,28 @@ tf.compat.v1.reset_default_graph()
 X = tf.compat.v1.placeholder("float", [None, timesteps, num_input])
 y = tf.compat.v1.placeholder("float", [None, num_classes])
 
-# initializer = tf.random_normal_initializer(stddev=0.1)
-initializer = tf.contrib.layers.xavier_initializer()
+initializer = tf.random_normal_initializer(stddev=0.1)
+# initializer = tf.contrib.layers.xavier_initializer()
 
 fc_weights = {
-        'out' : tf.Variable(initializer(([2*num_hidden[1], num_classes])), name='w_out')      # output weights for applying softmax
+        'hidden' : tf.Variable(initializer(([2*num_hidden[1], timesteps])), name='w_hidden'),      # output weights for applying softmax
+        'out' : tf.Variable(initializer(([timesteps])), name='w_out')
         }
 
-fc_biases = {
-        'out' : tf.Variable(tf.zeros([num_classes]), name='b_out')                # output bias
-        }
+fc_biases = {'hidden' : tf.Variable(initializer(([timesteps])), name='b_hidden')}                # output bias
 
-keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-weight_decay = tf.placeholder(tf.float32, name='weight_decay')
-tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, tf.nn.l2_loss(fc_weights['out']))
+keep_prob = tf.compat.v1.placeholder(tf.float32, name='keep_prob')
+weight_decay = tf.compat.v1.placeholder(tf.float32, name='weight_decay')
+
+tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, [tf.nn.l2_loss(fc_weights['out']),
+                                                                        tf.nn.l2_loss(fc_weights['hidden'])])
 
 
 '''#######################################################
 Define BiLSTM network architecture
 #######################################################'''
 
-def BiRNN(x, weights, bias):
+def BiRNN(x):
     '''
         BiRNN: Defines the architecture of LSTM network for training
         Args:
@@ -139,7 +141,7 @@ def BiRNN(x, weights, bias):
 
     for i in range(num_layers):
 
-        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu )          # define forward lstm cell with hidden cells
+        lstm_fw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)          # define forward lstm cell with hidden cells
         lstm_fw_cell = rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=keep_prob)       # define dropout over hidden forward lstm cell
         lstm_bw_cell = rnn.BasicLSTMCell(num_hidden[i+1], forget_bias=1.0, activation=tf.nn.leaky_relu)          # define backward lstm cell with hidden cells
         lstm_bw_cell = rnn.DropoutWrapper(lstm_bw_cell,  output_keep_prob=keep_prob)      # define dropout over hidden backward lstm cell
@@ -160,8 +162,7 @@ def BiRNN(x, weights, bias):
                 _ = tf.concat([state_fw.c, state_bw.c], axis=1, name='bidirectional_concat_c')
                 _ = tf.concat([state_fw.h, state_bw.h], axis=1, name='bidirectional_concat_h')
 
-
-    return tf.add(tf.matmul(output[-1], weights['out']), bias['out']), outputs
+    return outputs
 
 '''############################################################
 Define: attention , activation, loss, regularization, optimizer,
@@ -169,38 +170,18 @@ Define: attention , activation, loss, regularization, optimizer,
 ############################################################'''
 # Code Added
 with tf.name_scope("attention"):
-
-    pre_logits , output = BiRNN(X, fc_weights, fc_biases)
-    print(output.shape)
-    initializer = tf.random_normal_initializer(stddev=0.1)
-    print(output.shape)
-    hidden_states = output.shape[2]
-    print(hidden_states)
-
-    w_hidden = tf.get_variable(name="w_hidden", shape=[hidden_states, timesteps ], initializer=initializer)
-    b_hidden = tf.get_variable(name="b_hidden", shape=[timesteps], initializer=initializer)
-    w_output = tf.get_variable(name="w_output", shape=[timesteps], initializer=initializer)
-    # adding a one output node in the output layer creates a separate column vector for all the attention weights over which the softmax is applied, that created the problem previously
-
-    score = tf.tanh(tf.tensordot( output, w_hidden, axes=1) + b_hidden)
+    output = BiRNN(X)
+    score = tf.tanh(tf.tensordot(output, fc_weights['hidden'], axes=1) + fc_biases['hidden'])
     # Linear transformation by mulitiplying the weights and the rnn outputs and applying a non linear activtion over this output
 
-    attention = tf.tensordot(score , w_output, axes=1, name='attention')
-
+    attention = tf.tensordot(score , fc_weights['out'], axes=1, name='attention')
     attention_score = tf.nn.softmax(attention , name='attention_score')
-
     attention_out = tf.reduce_sum( output * tf.expand_dims(attention_score, -1), 1)
-
-    print(attention_score.shape)
-    print(attention_out.shape)
-
     tf.compat.v1.summary.histogram("attention_score", attention_score)  # write attention score values to tensorboard summary (histogram visualization)
-
 
 with tf.name_scope("output"):
     logits = tf.contrib.slim.fully_connected(attention_out, 2, activation_fn=None)
     prediction = tf.nn.softmax(logits, name='prediction')   # applies softmax over BiRNN output to calculate predicted values
-
     tf.compat.v1.summary.histogram("prediction", prediction)    # write predicted values to tensorboard summary (histogram visualization)
 
 with tf.name_scope("accuracy"):
@@ -213,28 +194,24 @@ with tf.name_scope("loss"):
     loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y))      # calculate loss
     tf.compat.v1.summary.scalar('loss_op', loss_op)                                                 # write loss values to tensorboard summary
                                                                                                     # (histogram visualization)
-
-    reg_losses = tf.compat.v1.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)                              # apply regularizer over output weights
-    loss_op = loss_op + weight_decay * tf.add_n(reg_losses)                                         # add regularization term with loss.
-
-
+    reg_losses = tf.compat.v1.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)                    # apply regularizer over output weights
+    loss_op = loss_op + weight_decay * tf.add(reg_losses[0][0], reg_losses[0][1])                   # add regularization term with loss.
 
 optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)                                     # apply Adam Optimizer for loss optimization
 gvs = optimizer.compute_gradients(loss_op)                                                      # fetch gradient values
-
 train_op = optimizer.apply_gradients(gvs)                                                       # applied clipped gradients
-
 
 
 '''#######################################################
 Begin training
 #######################################################'''
-def save_LSTM_states(states_inter, state_val, SAVE_STATES_TO):
+
+def save_LSTM_states(states_inter, state_val, save_states_to):
     '''
     Description:    Saves LSTM states to disk
     Input:          1. states_inter: list of states from batch inputs. Eg: If number_of_batches = 4, len(states_inter) = 4
                     2. state_val: list of states from validation input
-                    3. SAVE_STATES_TO: location where the states file have to saved to
+                    3. save_states_to: location where the states file have to be saved to
     Output:         HDF5 file of lstm states saved to SAVE_STATES_TO location
     '''
     final_states = []
@@ -247,19 +224,39 @@ def save_LSTM_states(states_inter, state_val, SAVE_STATES_TO):
             temp = final_states[k][i]
             val_1 = np.concatenate((val_1,temp),axis=0)
     print('\nSaving LSTM states...')
-    with h5py.File(SAVE_STATES_TO, 'w') as hf:
+    with h5py.File(save_states_to, 'w') as hf:
         hf.create_dataset("d1",  data= val_1)
-    print('LSTM states saved to {}'.format(SAVE_STATES_TO))
+    print('LSTM states saved to {}'.format(save_states_to))
+
+
+def save_attention_scores(scores_inter, attention_val, save_scores_to):
+    '''
+    Description:    Saves LSTM states to disk
+    Input:          1. scores_inter: list of scores from batch inputs.
+                    2. attention_val: list of scpres from validation input
+                    3. save_scores_to: location where the attention scores file have to be saved to
+    Output:         HDF5 file of lstm states saved to SAVE_STATES_TO location
+    '''
+    attention_scores = []
+    scores_inter = np.vstack(scores_inter)
+    attention_scores.append(scores_inter)
+    attention_scores.append(np.array(attention_val))
+    print('\nSaving Attention scores...')
+    f = open(save_scores_to,'wb')
+    pickle.dump(attention_scores,f)
+    print('Saved attention scores to {}'.format(save_scores_to))
 
 def plot_confusion(y_test, pred):
     labels = [0, 1]
     cm = confusion_matrix(y_test, pred, labels)
     precision = cm[1][1] / (cm[1][1] + cm[0][1])
     recall = cm[1][1] / (cm[1][1] + cm[1][0])
+    f1 = 2*((precision*recall)/(precision+recall))
     print('Confusion Matrix')
     print(cm)
     print('Precision: {}'.format(precision))
     print('Recall: {}'.format(recall))
+    print('F1 Score: {}'.format(f1))
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cax = ax.matshow(cm, cmap='summer')
@@ -267,7 +264,7 @@ def plot_confusion(y_test, pred):
     for (i, j), z in np.ndenumerate(cm):
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 
-    plt.title('Confusion matrix of Baseline')
+    plt.title('Confusion matrix of {}'.format(MODEL_NAME))
     fig.colorbar(cax)
     ax.set_xticklabels([''] + labels)
     ax.set_yticklabels([''] + labels)
@@ -292,8 +289,8 @@ def run_train(session, train_x, train_y):
     train_counter = 0
     validation_counter = 0
 
-    training_steps = 1  # epochs
-    batch_size = 128        # batch size
+    training_steps = 10000  # epochs
+    batch_size = 64        # batch size
     display_step = 10       # displays
 
     #for early stopping :
@@ -315,7 +312,6 @@ def run_train(session, train_x, train_y):
         inner_split = train_x.shape[0] // batch_size                                # creating batches
         states_inter = []
         scores_inter = []
-        attention_scores = []                                                       # list to append final training and validation attention scores
 
         for i in range(inner_split + 1):
             batch_x = train_x[i*batch_size:(i+1)*batch_size]                        # generating batches of X_train
@@ -324,17 +320,14 @@ def run_train(session, train_x, train_y):
 
             if epoch == 1 or epoch % display_step == 0:                             # print and save necessary information about training only at an interval of 'display_step' number of steps to reduce computational complexity
 
-                state_train , attention_train  = session.run([output,attention_score], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})     # extract states for each batch-wise training inputs
-                print(state_train.shape)
+                state_train, attention_train = session.run([output,attention_score], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})     # extract states for each batch-wise training inputs
                 states_inter.append(np.array(state_train))
-                print(len(states_inter))
                 scores_inter.append(np.array(attention_train))
-                print(len(states_inter))
                 if i == inner_split:                                                # last batch split of the selected epoch
                     summary, loss_train, acc_train = session.run([merged, loss_op, accuracy], feed_dict={X: batch_x, y: batch_y, keep_prob :0.5, weight_decay:1e-01})
                     train_writer.add_summary(summary, train_counter)
 
-                    summary, loss_val, acc_val, pred_val ,state_val ,attention_val = session.run([merged, loss_op, accuracy, prediction, output , attention_score ], feed_dict={X: X_val, y: y_val , keep_prob :1.0, weight_decay:0.0})
+                    summary, loss_val, acc_val, pred_val, state_val, attention_val = session.run([merged, loss_op, accuracy, prediction, output , attention_score ], feed_dict={X: X_val, y: y_val , keep_prob :1.0, weight_decay:0.0})
                     validation_writer.add_summary(summary, validation_counter)
                     train_counter+=display_step
                     validation_counter+=display_step
@@ -357,7 +350,6 @@ def run_train(session, train_x, train_y):
                     #   1.1. If the average of last 20 iterations are less than 0.72
 
                     costs_inter.append(loss_val)            # append validation loss to costs_inter
-
                     if loss_val < best_loss_val:            # if improved validation loss found
                         best_loss_val = loss_val            # set current validation loss to best_loss_val
                         best_train_acc = acc_train          # set current training accuracy to best_train_acc
@@ -373,53 +365,37 @@ def run_train(session, train_x, train_y):
                         print('\n Validation Confusion Matrix: ')
                         plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
                         print("\nNo improvement found during the last {} iterations".format(patience))
-                        print('Avg validation loss over this period: ', sum(costs_inter)/len(costs_inter))
-
-                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
-
+                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}.ckpt".format(round(acc_val,2)), global_step=epoch)
                         print('Recording training and validation states at cost of early-stopping')
-                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
-
-                        scores_inter = np.vstack(scores_inter)
-                        attention_scores.append(scores_inter)
-                        attention_scores.append(np.array(attention_val))
-
-                        return acc_results, loss_results, attention_scores
+                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-'+str(epoch)+'.hdf5')
+                        save_attention_scores(scores_inter, attention_val, SAVE_SCORES_TO+'-'+str(epoch)+'.pkl')
+                        return acc_results, loss_results
 
 
                     elif epoch % 100 == 0:                                                   # else, save checkpoint and reset costs_inter and last_improvement
                         print('\n Validation Confusion Matrix: ')
                         plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
                         print('\nSaving Checkpoint...')
-                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)
+                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}.ckpt".format(round(acc_val,2)), global_step=epoch)
                         print('<<<Model Checkpoint saved>>>')
                         print('<<<State Checkpoint saved>>>')
                         save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-'+str(epoch)+'.hdf5')
-
+                        save_attention_scores(scores_inter, attention_val, SAVE_SCORES_TO+'-'+str(epoch)+'.pkl')
                         print('Continuing Training...\n')
-
 
                     #...... END EARLY STOPPING EVALUATION ......
 
                     if epoch == training_steps:                                 # do not change this intendation to make sure this line run only once and not for each split of the epoch!
-
                         print('\n Validation Confusion Matrix: ')
                         plot_confusion(np.argmax(y_val, axis=1), np.argmax(pred_val, axis=1))
-
-                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}_{}.ckpt".format(acc_train, acc_val), global_step=epoch)                         # save model to local
-
+                        _ = saver.save(session, SAVE_MODEL_TO+"m_{}.ckpt".format(round(acc_val,2)), global_step=epoch)                         # save model to local
                         print('Recording final training and validation states')
-                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-final.hdf5')
-
-                        scores_inter = np.vstack(scores_inter)
-                        attention_scores.append(scores_inter)
-                        attention_scores.append(np.array(attention_val))
-
+                        save_LSTM_states(states_inter, state_val, SAVE_STATES_TO+'-'+str(epoch)+'.hdf5')
+                        save_attention_scores(scores_inter, attention_val, SAVE_SCORES_TO+'-'+str(epoch)+'.pkl')
                         print('\nBest result: Training acc = {}, Validation acc = {} observed at {}'.format(best_train_acc, best_val_acc, best_loss_observed_epoch)) # the best result seen before 'no improvements'
 
-    print(attention_scores[0].shape, attention_scores[1].shape)
-    print("Total attention list " + str(len(attention_scores)))
-    return acc_results, loss_results, attention_scores
+    # print("Total attention list " + str(len(attention_scores)))
+    return acc_results, loss_results
 
 
 saver = tf.compat.v1.train.Saver()
@@ -433,13 +409,9 @@ with tf.compat.v1.Session() as sess:
     start_time = datetime.datetime.now()
     print('-'*50)
     print('Session started at: {}'.format(start_time))
-    acc_results, loss_results,  attention_scores = run_train(sess, X_train, y_train)
+    acc_results, loss_results = run_train(sess, X_train, y_train)
     print('Training performance: Accuracy {}, Loss {}'.format(acc_results[-1], loss_results[-1]))
     end_time = datetime.datetime.now()
-    print('Total Execution time: {} minutes'.format(end_time.minute - start_time.minute))
-
-    f = open(SAVE_SCORES_TO,'wb')
-    pickle.dump(attention_scores,f)
-
-    print('Attention scores saved to {}\{}'.format(os.getcwd(), SAVE_SCORES_TO))
+    print('Total Execution time: {} minutes'.format(end_time - start_time))
     sess.close()
+
