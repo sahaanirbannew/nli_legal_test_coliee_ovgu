@@ -18,8 +18,8 @@ For training any of the 8 models, one needs to run the program in the following 
     
         OR
     
-    > python3 main.py python3
-    Here you provide your system defined python launcher as an extra argument
+    > {python3} main.py {python3}
+    Here you provide your system defined python launcher as an extra argument. The arguments in both the curly braces will exactly be the same. Here, python3 is taken as an example. 
     
 ### Testing
 
@@ -30,8 +30,8 @@ For testing any of the 8 models, one needs to run the program in the following w
     
         OR
     
-    > python3 main.py python3
-    Here you provide your system defined python launcher as an extra argument
+    > {python3} main.py {python3}
+    Here you provide your system defined python launcher as an extra argument. The arguments in both the curly braces will exactly be the same. Here, python3 is taken as an example. 
     
 This is same as that in training. But one should take care of the model which they are interested in testing. For this, one should navigate to the model's folder and copy+paste the name of META_FILE (.meta file) of the model and then enter it once prompted on command-line.
  
