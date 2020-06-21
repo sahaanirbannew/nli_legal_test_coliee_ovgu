@@ -10,9 +10,10 @@ Created on Sat May  2 10:32:46 2020
 #######################################################'''
 
 import os, json
+import math
+import sys
 import numpy as np
 from preprocessing import preprocessing_sabines_dataset as pre
-
 
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
@@ -20,7 +21,8 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 from keras.utils.np_utils import to_categorical
 
-MODEL = 8
+MODEL = int(sys.argv[1])
+# MODEL = 8
 
 if MODEL == 5:
     from data_parser import data_parser_for_baseline as dp
@@ -42,7 +44,8 @@ Location of file(s) required to run the program
 RAW_TEST_DATA = "../data/raw_data/TestData_en.xml"
 LABELS_FILE = "../data/raw_data/test_labels.txt"
 ROOT_MODEL_DIR = "../models/{}/attention/".format(MODEL_NAME)
-META_FILE = "m_0.5849056839942932_0.5873016119003296.ckpt-280.meta"
+META_FILE = sys.argv[2]
+# META_FILE = "m_0.5849056839942932_0.5873016119003296.ckpt-280.meta"
 
 
 if os.path.exists('../data/preprocessed_data/preprocessed_test_set.json'):
@@ -83,6 +86,9 @@ def plot_confusion(y_test, pred):
     precision = cm[1][1] / (cm[1][1] + cm[0][1])
     recall = cm[1][1] / (cm[1][1] + cm[1][0])
     f1 = 2*((precision*recall)/(precision+recall))
+    mcc = (cm[1][1] * cm[0][0] - cm[0][1] * cm[1][0]) / math.sqrt((cm[1][1] + cm[0][1]) * (cm[1][1]+cm[1][0]) 
+                                                                  * (cm[0][0]+cm[0][1]) * (cm[0][0]+cm[1][0]))
+    print('Confusion Matrix')
     print('Confusion Matrix')
     print(cm)
     print('Precision: {}'.format(precision))

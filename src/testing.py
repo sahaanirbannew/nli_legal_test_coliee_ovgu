@@ -10,6 +10,7 @@ Created on Sat May  2 10:32:46 2020
 #######################################################'''
 
 import os, json
+import sys
 import numpy as np
 from preprocessing import preprocessing_sabines_dataset as pre 
 import math
@@ -20,7 +21,8 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 from keras.utils.np_utils import to_categorical
 
-MODEL = 4
+MODEL = int(sys.argv[1])
+# MODEL = 4
 
 if MODEL == 1:
     from data_parser import data_parser_for_baseline as dp
@@ -42,7 +44,8 @@ Location of file(s) required to run the program
 RAW_TEST_DATA = "../data/raw_data/TestData_en.xml"
 LABELS_FILE = "../data/raw_data/test_labels.txt"
 ROOT_MODEL_DIR = "../models/{}/".format(MODEL_NAME)
-META_FILE = "m_0.5283018946647644_0.682539701461792.ckpt-780.meta"
+META_FILE = sys.argv[2]
+# META_FILE = "m_0.5283018946647644_0.682539701461792.ckpt-780.meta"
 
 
 if os.path.exists('../data/preprocessed_data/preprocessed_test_set.json'):

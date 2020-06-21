@@ -26,8 +26,8 @@ import tensorflow as tf
 from tensorflow.contrib import rnn
 from keras.utils.np_utils import to_categorical
 
-# MODEL = int(sys.argv[1])
-MODEL = 1
+MODEL = int(sys.argv[1])
+# MODEL = 1
 
 if MODEL == 1:
     from data_parser import data_parser_for_baseline as dp
