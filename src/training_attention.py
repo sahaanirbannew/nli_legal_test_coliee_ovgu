@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Thurs Nov 21 18:34:01 2019
+@author: Sachin Nandakumar, Venkatesh Das
+
+"""
 
 '''#######################################################
                         TRAINING ATTENTION
