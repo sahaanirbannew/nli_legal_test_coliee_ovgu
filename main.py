@@ -64,7 +64,7 @@ def print_model_options(python_launcher, mode):
                 else:
                     display_testing_instructions('testing_attention.py')
                     meta_file = input("Enter META_FILE: ")
-                    os.system("{} src/testing_attention.py {}".format(python_launcher, option_number, meta_file))
+                    os.system("{} src/testing_attention.py {} {}".format(python_launcher, option_number, meta_file))
                 
             else:
                 print_error_msg()
